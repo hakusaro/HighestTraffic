@@ -51,11 +51,12 @@ namespace HighestTraffic
 		{
 			ServerApi.Hooks.GameInitialize.Register(this, OnGameInitialize);
 			ServerApi.Hooks.NetGreetPlayer.Register(this, OnGreetPlayer);
-			ServerApi.Hooks.ServerLeave.Register(this, OnPlayerLeave);
 		}
 
 		private void OnGameInitialize(EventArgs args)
 		{
+			Commands.ChatCommands.Add(new Command("", Traffic, "traffic"));
+
 			var path = Path.Combine(TShock.SavePath, "TrafficStats.json");
 			(_config = Config.Read(path)).Write(path);
 
@@ -116,27 +117,21 @@ namespace HighestTraffic
 			}
 		}
 
-		private void OnPlayerLeave(LeaveEventArgs args)
-		{
-			var player = TShock.Players[args.Who];
-			if (player == null)
-			{
-				return;
-			}
-
-			if (_joinedIps.Contains(player.IP))
-			{
-				_joinedIps.Remove(player.IP);
-			}
-		}
-
 		private void UpdateTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
 		{
 			_database.Query(
 				"INSERT INTO traffic (Timestamp, UniquePlayers, AllJoins, MaxPlayers) VALUES (@0, @1, @2, @3)",
 				_timestamp, _joinedIps.Count, _realJoins, _maxPlayerCount);
 			_realJoins = 0;
+			_joinedIps.Clear();
 			_timestamp = DateTime.UtcNow.ToString("G");
+		}
+
+		private void Traffic(CommandArgs args)
+		{
+			args.Player.SendSuccessMessage("Most users ever online: {0}/{1}.", _maxPlayerCount, TShock.Config.MaxSlots);
+			args.Player.SendSuccessMessage("Unique IP joins this hour: {0}.", _joinedIps.Count);
+			args.Player.SendSuccessMessage("Total joins this hour: {0}.", _realJoins);
 		}
 
 		protected override void Dispose(bool disposing)
