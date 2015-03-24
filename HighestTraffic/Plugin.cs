@@ -76,7 +76,7 @@ namespace HighestTraffic
 
 			//last entry
 			using (var reader =
-				_database.QueryReader("SELECT MaxPlayers FROM traffic WHERE ID = (SELECT Max(ID) FROM traffic)"))
+				_database.QueryReader("SELECT MaxPlayers FROM Traffic WHERE ID = (SELECT Max(ID) FROM Traffic)"))
 			{
 				if (reader.Read())
 				{
